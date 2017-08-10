@@ -2,4 +2,4 @@ heap/*
 *.pyc
 peda-session-*.txt
 .gdb_history
-*.swp
+*.sw[po]

