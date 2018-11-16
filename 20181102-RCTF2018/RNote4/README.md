@@ -123,3 +123,6 @@ unsigned __int64 sub_400A32()
 堆溢出时，size的范围是1byte，0-0xff，可以溢出后一个0x10chunk1的chunk1[1]，可以控制其中的指针，update后一个chunk时，可以实现任意地址写0-0xff。堆溢出转化为任意地址写。
 
 没有开RELRO，gdb中可以看出.dynamic段是可写的，且没有开aslr，利用方式：写free的string table为system，在bss上写/bin/sh后，堆溢出chunk1[1]为/bin/sh的地址，调用free就可以getshell。
+
+## 总结
+heap overflow导致可以控制chunk中的指针实现任意地址写，由于dynamic可写，修改.strtab可以劫持还未调用的函数。
