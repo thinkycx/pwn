@@ -1,62 +1,23 @@
+#!/usr/bin/env python
+# coding=utf-8
+# author: thinkycx
+# date: 2018-10-31
 from pwn import *
-import sys,getopt
-import time
+context.local(arch='amd64', os='linux')
 
-
-args = sys.argv[1:]
-context(os='linux', arch='i386')
-debug = 1 if '-nd' not in args else 0
-
-proc_name = './pwn' # dont omit ./ 
-local = 1 if '-r' not in args else 0
-isattach = local & 1
-bps = isattach & 1
-#socat TCP4-LISTEN:10001,fork EXEC:./pwn1
-ip = 'chall.pwnable.tw'
-port = 10000
-io = None
-shellcode = "\x31\xc9\xf7\xe1\x51\x68\x2f\x2f\x73"
-shellcode += "\x68\x68\x2f\x62\x69\x6e\x89\xe3\xb0"
-shellcode += "\x0b\xcd\x80"
-
-def makeio():
-    global io 
-    if local:
-    	io = process(proc_name)
-    else:
-    	io = remote(ip,port)
-def ru(data):
-	return io.recvuntil(data)
-def rv():
-	return io.recv()
-def ra():
-    return io.recvall()
-def sl(data):
-	return io.sendline(data)
-def sd(data):
-	return io.send(data)
-def rl():
-	return io.recvline()
-def sa(d,data):
-    return io.sendlineafter(d,data)
-def attach():
-    log.info('attach' + str(attach))
-    if isattach:
-        if bps:
-            gdb.attach(pidof(io)[0], open('bps'))
-        else:
-            gdb.attach(pidof(io)[0])
-    
-
-def pwn():
-    makeio()
-    attach()
-    if debug:
-        context.log_level = 'debug'
-    
-    io.interactive()
-
+def pwn(io):
+    if local&debug: gdb.attach(io,'break *0x400641')
 
 if __name__ == '__main__':
-	pwn()
-
+    global io, elf, libc, debug
+    local, debug = 1, 0
+    context.log_level = 'debug'
+    filename = './scanf'
+    elf = ELF(filename)
+    if local:
+        io = process(filename, env={"LD_PRELOAD":"/tmp/libc.so"})
+        libc = ELF('/lib/x86_64-linux-gnu/libc.so.6')
+        # context.terminal = ['tmux', '-x', 'sh', '-c']
+        context.terminal = ['tmux', 'splitw', '-h' ]
+    pwn(io)
+    io.interactive()
