@@ -1,7 +1,8 @@
 # pwn
-writeups for CTF pwn
-
-My pwnable.kr writeups have been moved to here: https://github.com/thinkycx/pwnable.kr
+My writeups for CTF pwn :
+- pwnable.kr https://github.com/thinkycx/pwnable.kr
+- pwnable.tw https://github.com/thinkycx/pwnable.tw
+- this repo
 
 # log
 20181203 HITCON2014/stkof/stkof - new method : fatbin attack - fd @ &malloctimes-8   
