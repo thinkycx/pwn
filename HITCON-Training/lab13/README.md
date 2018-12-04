@@ -117,7 +117,7 @@ void delete_heap(){
 
 ## exploit
 
-思路：假设malloc 0x18，chunk会复用下一个chunk的PREV_SIZR，因此可以利用多写的一个字节，来overflow nextchunk 的 SIZE。这时free nextchunk就可以获取larget fastbin chunk，再次malloc导致chunk overlap，可以实现关键指针！本题中利用chunk overlap控制heap->content，使用show泄漏GOT，使用edit hijack free@GOT为system，free一个content为"/bin/sh\x00"的字符串就可以getshell。
+思路：假设malloc 0x18，chunk会复用下一个chunk的PREV_SIZR，因此可以利用多写的一个字节，来overflow nextchunk 的 SIZE。这时free nextchunk就可以获取larget fastbin chunk，再次malloc导致chunk overlap，可以实现修改关键指针！本题中利用chunk overlap控制heap->content，使用show泄漏GOT，使用edit hijack free@GOT为system，free一个content为"/bin/sh\x00"的字符串就可以getshell。
 
 具体的关于overlap的细节如下：
 
