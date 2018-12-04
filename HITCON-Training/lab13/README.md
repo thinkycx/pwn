@@ -1,4 +1,4 @@
-题目来自[HITCON-Training](https://github.com/scwuaptx/HITCON-Training)@Angelboy，溢出一字节修改fastbin chunk size，free获取稍微large的fastbin chunk。再次malloc实现fastbin chunk overlap，从而可以修改关键指针，hjiack got getshell！
+题目来自[HITCON-Training](https://github.com/scwuaptx/HITCON-Training)@Angelboy，off-by-one 修改inuse的fastbin chunk size，free该chunk获取一个稍微大的的fastbin chunk。再次malloc实现fastbin chunk overlap，从而可以修改关键指针，hjiack got getshell！
 
 ## 题目信息
 
@@ -125,7 +125,7 @@ void delete_heap(){
 
 ![image-20181204214015905](./img/image-20181204214015905.png)
 
-溢出后，free chunk2 chunk3，就可以获取一个0x40和0x20大小的fastbin chunk。再次malloc实现chunk overlap，由于create函数中是循环操作，因此申请create 0x40时，正好可以把fastbin中的两个chunk申请回来，一个是data的chunk，一个是heap结构体的chunk。
+溢出后，free chunk2 chunk3，就可以获取一个0x40和0x20大小的fastbin chunk。再次malloc实现chunk overlap。因此申请create 0x40，正好可以把fastbin中的两个chunk申请回来，一个是data的chunk，一个是heap结构体的chunk。
 
 ![image-20181204215021950](./img/image-20181204215021950.png)
 
