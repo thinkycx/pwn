@@ -3,3 +3,6 @@ heap/*
 peda-session-*.txt
 .gdb_history
 *.sw[po]
+*.idb
+*.i64
+.DS_Store
