@@ -72,21 +72,21 @@ io.interactive()
 ```
 
 1. free后得到两个unsorted bin中的chunk，其中main_arena.bins[0]即fd用于向unsorted bin中增加chunk，main_arena.bins[1]即bk用于便利unsorted bin，从中取出chunk。因此，free(0) @0x603000的chunk0，再free(1) @0x603120的chunk1后，main_arena.bins[0]指向最后一次加入的chunk1，main_arena.bins[1]指向第一次加进去的chunk0。malloc时就满足了unsorted bin的FIFO特性。
-   ![image-20181219111000129](img/2018-12-18-HITCON-Training-lab14-magic-heap/image-20181219111000129-5189000.png)
+   ![image-20181219111000129](img/2018-12-18-HITCON-Training-lab14-magic-heap-unsorted-bin-attack/image-20181219111000129-5189000.png)
 
 2. malloc时，从main_arena.bins[1]即bk开始遍历（也就是unsorted bin中最后一个chunk开始遍历），若大小符合，取出该chunk返回，并将该chunk从unsorted bin list中unlink。此时，更新main_arena.bins[1]和bck->fd（对应源码中的两条更新语句）。（本来这里想了很久，后来猛然发现这就是更新双向链表的基本操作啊！）
-   ![image-20181219131455793](img/2018-12-18-HITCON-Training-lab14-magic-heap/image-20181219131455793-5196495.png)
+   ![image-20181219131455793](img/2018-12-18-HITCON-Training-lab14-magic-heap-unsorted-bin-attack/image-20181219131455793-5196495.png)
 
 3. 继续malloc，取出unsorted bin中的剩下的一个chunk，执行unsorted_chunks (av)->bk = bck;后，bins[1]更新：
-   ![image-20181219132356015](img/2018-12-18-HITCON-Training-lab14-magic-heap/image-20181219132356015-5197036.png)
+   ![image-20181219132356015](img/2018-12-18-HITCON-Training-lab14-magic-heap-unsorted-bin-attack/image-20181219132356015-5197036.png)
 
    执行bck->fd = unsorted_chunks (av)后，由于bck就是&top，因此bins[0]更新。更新前：
 
-   ![image-20181219113707614](img/2018-12-18-HITCON-Training-lab14-magic-heap/image-20181219113707614.png)
+   ![image-20181219113707614](img/2018-12-18-HITCON-Training-lab14-magic-heap-unsorted-bin-attack/image-20181219113707614.png)
 
    更新后：
 
-   ![image-20181219132114048](img/2018-12-18-HITCON-Training-lab14-magic-heap/image-20181219132114048-5196874.png)
+   ![image-20181219132114048](img/2018-12-18-HITCON-Training-lab14-magic-heap-unsorted-bin-attack/image-20181219132114048-5196874.png)
 
 ## 0x02 unsorted bin attack原理
 
@@ -154,12 +154,12 @@ int main() {
 
 假设栈中的某个变量地址是&target_value，并且我们已经通过malloc和free在unsorted bin中得到了一个chunk。
 
-1. 首先通过堆溢出控制unsorted bin 中chunk'bk to &target_value -0x10。![image-20181219103200415](img/2018-12-18-HITCON-Training-lab14-magic-heap/image-20181219103200415-5186720.png)
+1. 首先通过堆溢出控制unsorted bin 中chunk'bk to &target_value -0x10。![image-20181219103200415](img/2018-12-18-HITCON-Training-lab14-magic-heap-unsorted-bin-attack/image-20181219103200415-5186720.png)
 
 2. malloc从unsorted bin中取出该chunk后发现，target value的值更新了，变成了&top。
-   ![image-20181219135656913](img/2018-12-18-HITCON-Training-lab14-magic-heap/image-20181219135656913-5199016.png)
+   ![image-20181219135656913](img/2018-12-18-HITCON-Training-lab14-magic-heap-unsorted-bin-attack/image-20181219135656913-5199016.png)
 
-整个利用的过程可以参考ctf-wiki的图，伪造了fake_bk后，修改了两个值：bins[1]指向fake_bk，fake_bk->fd指向top：![](img/2018-12-18-HITCON-Training-lab14-magic-heap/unsorted_bin_attack_order.png)
+整个利用的过程可以参考ctf-wiki的图，伪造了fake_bk后，修改了两个值：bins[1]指向fake_bk，fake_bk->fd指向top：![](img/2018-12-18-HITCON-Training-lab14-magic-heap-unsorted-bin-attack/unsorted_bin_attack_order.png)
 
 这里提一个小问题（目前觉得对做题没什么帮助，可以忽略）：从unsorted bin中取出chunk时，会将该chunk从unsorted bin中移除。为什么这里的unsorted bin的FD（bins[0]）还是指向的该chunk呢？
 
@@ -173,7 +173,7 @@ edit heap时存在堆溢出，程序要求我们只需要修改bss段上的magic
 
 修改时的关键汇编代码如下：
 
-![image-20181218153244491](img/2018-12-18-HITCON-Training-lab14-magic-heap/image-20181218153244491.png)
+![image-20181218153244491](img/2018-12-18-HITCON-Training-lab14-magic-heap-unsorted-bin-attack/image-20181218153244491.png)
 
 部分exploit：
 
@@ -193,4 +193,4 @@ def pwn(io):
     io.sendline("4869")
 ```
 
-![image-20181218154629333](img/2018-12-18-HITCON-Training-lab14-magic-heap/image-20181218154629333.png)
+![image-20181218154629333](img/2018-12-18-HITCON-Training-lab14-magic-heap-unsorted-bin-attack/image-20181218154629333.png)
