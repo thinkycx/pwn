@@ -5,8 +5,10 @@ My writeups for CTF pwn :
 - this repo
 
 # log
-20181207 SECCON2016/tinypad/exp-aslr-success.py - house-of-einherjar - inuse smallbin chunk extend  
-20181206 SECCON2016/tinypad/exp-noaslr-success.py  
+20181218 HITCON-Training/lab14/magicheap - unsorted bin attack - overflow unsorted bin chunk's bk to &target_value-0x10  
+20181217 HITCON-Training/lab11/bamboobo - house of force - change top chunk's size and malloc anywhere  
+20181207 SECCON2016/tinypad/exp-aslr-success.py - house-of-einherjar - inuse smallbin chunk extend      
+20181206 SECCON2016/tinypad/exp-noaslr-success.py      
 20181204 HITCON-Training/lab13/heapcreator - inuse fastbin chunk extend   
 20181203 HITCON2014/stkof/stkof - new method : fatbin attack - fd @ &malloctimes-8   
 20181130 BCTF2018/easiest - basic fastbin attack and hijack GOT  
